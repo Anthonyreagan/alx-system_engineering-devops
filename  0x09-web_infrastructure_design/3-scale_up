@@ -1,0 +1,113 @@
+Added Components & Justifications
+1. Additional Server
+Type: Dedicated database server
+
+Purpose:
+
+Separate database workload from application servers
+
+Allow independent scaling of database resources
+
+Improve query performance with dedicated resources
+
+2. HAProxy Cluster (Active/Active)
+Configuration:
+
+haproxy
+frontend http-in
+    bind *:80
+    bind *:443 ssl crt /etc/ssl/foobar.com.pem
+    mode http
+    default_backend web_servers
+
+backend web_servers
+    balance leastconn
+    server web1 192.168.1.10:80 check
+    server web2 192.168.1.11:80 check
+    server web3 192.168.1.12:80 check
+Benefits:
+
+Eliminates single point of failure
+
+Doubles load balancing capacity
+
+Enables zero-downtime maintenance
+
+3. Component Separation
+Tier	Count	Software	Scaling Benefit
+Web	2+	Nginx	Handle more concurrent connections
+Application	4+	Node.js/Python	Process more business logic requests
+Database	3+	MySQL Group Repl	Distribute read/write operations
+Caching	2+	Redis	Reduce database load
+Infrastructure Architecture
+Horizontal Scaling Approach
+Web Tier:
+
+Stateless Nginx servers
+
+Auto-scaling based on CPU/requests
+
+Global Server Load Balancing (GSLB)
+
+Application Tier:
+
+Containerized microservices
+
+Kubernetes orchestration
+
+Blue-green deployment capability
+
+Database Tier:
+
+MySQL Group Replication
+
+Primary-Primary configuration
+
+Automated failover
+
+Traffic Flow
+User → DNS → Nearest HAProxy node
+
+HAProxy → Least-busy web server
+
+Nginx → Available app server
+
+App server → Redis (cache) or MySQL (persistent data)
+
+Implementation Commands
+Database Setup
+bash
+# Configure Group Replication
+SET GLOBAL group_replication_bootstrap_group=ON;
+START GROUP_REPLICATION;
+SET GLOBAL group_replication_bootstrap_group=OFF;
+Load Balancer Health Check
+bash
+while true; do 
+  curl -I http://haproxy-stats:32700 2>/dev/null | grep 'HTTP'; 
+  sleep 5; 
+done
+Benefits of This Architecture
+Improved Reliability:
+
+No single point of failure
+
+99.99% uptime SLA achievable
+
+Better Performance:
+
+Dedicated resources for each tier
+
+Optimized hardware for specific workloads
+
+Easier Maintenance:
+
+Update one tier without affecting others
+
+Rolling deployments with zero downtime
+
+Cost Efficiency:
+
+Scale only what you need
+
+Right-size each component
