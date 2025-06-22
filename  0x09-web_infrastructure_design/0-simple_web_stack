@@ -1,0 +1,71 @@
+Explanation of the Infrastructure
+User requests www.foobar.com: The user types the URL or clicks a link to www.foobar.com in their browser.
+
+DNS resolution: The DNS system resolves www.foobar.com to the IP address 8.8.8.8 (our single server).
+
+Request reaches the server: The HTTP/HTTPS request arrives at the server with IP 8.8.8.8.
+
+Web server (Nginx): Receives the request and either serves static content directly or forwards dynamic requests to the application server.
+
+Application server: Processes the dynamic requests, executes the application code, and may query the database if needed.
+
+Database (MySQL): Stores and retrieves persistent data for the application.
+
+Response generated: The application server generates a response which goes back through the web server to the user's browser.
+
+Component Explanations
+What is a server: A server is a computer or system that provides resources, data, services, or programs to other computers (clients) over a network. In this case, it's a physical or virtual machine hosting our web infrastructure.
+
+Role of the domain name: The domain name (foobar.com) provides a human-readable address for the website, which is translated to an IP address (8.8.8.8) via DNS. The www record is a subdomain of foobar.com.
+
+DNS record type for www: The www in www.foobar.com is typically a CNAME record that points to foobar.com, which then has an A record pointing to 8.8.8.8. Alternatively, www could be an A record pointing directly to 8.8.8.8.
+
+Role of the web server (Nginx):
+
+Handles HTTP/HTTPS requests and responses
+
+Serves static content (HTML, CSS, JS, images)
+
+Acts as a reverse proxy for the application server
+
+Can handle load balancing (though not utilized in this simple setup)
+
+Implements SSL/TLS termination
+
+Role of the application server:
+
+Executes the application code (Python, PHP, Node.js, etc.)
+
+Processes business logic
+
+Generates dynamic content
+
+Communicates with the database when needed
+
+Role of the database (MySQL):
+
+Stores persistent data (user accounts, content, etc.)
+
+Provides structured data storage and retrieval
+
+Handles data relationships and integrity
+
+Processes queries from the application server
+
+Server communication with user: The server uses the HTTP/HTTPS protocol over TCP/IP to communicate with the user's computer. The default ports are 80 for HTTP and 443 for HTTPS.
+
+Infrastructure Issues
+SPOF (Single Point of Failure): Since there's only one server, if it fails, the entire website becomes unavailable.
+
+Downtime during maintenance: Any maintenance (code deployments, server updates, database migrations) requires taking the server offline, making the website unavailable during that time.
+
+Cannot scale for increased traffic: With only one server, there's limited capacity to handle traffic spikes. The server can become overloaded, leading to slow response times or crashes.
+
+No redundancy: If the database fails, the application fails, even if other components are working.
+
+Security vulnerabilities: A single server handling all components increases attack surface and makes security breaches more impactful.
+
+Limited geographical reach: All users worldwide connect to the same server, potentially causing latency for users far from the server location.
+
+This simple infrastructure is suitable for small, low-traffic websites but would need enhancements for production-grade, high-availability applications.
+
