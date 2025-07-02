@@ -1,0 +1,137 @@
+text
+[User] -> [DNS: www.foobar.com] -> [HAProxy Load Balancer]
+                                     |
+                     +---------------+---------------+
+                     |                               |
+             [Web Server 1 (Nginx)]          [Web Server 2 (Nginx)]
+                     |                               |
+             [App Server 1]                   [App Server 2]
+                     |                               |
+             [MySQL Replica]                 [MySQL Primary]
+
+             
+Components Explanation
+1. Load Balancer (HAProxy)
+Purpose: Distributes traffic across multiple servers
+
+Algorithm: Round Robin (default)
+
+Rotates requests evenly between servers
+
+Simple and effective for most cases
+
+Setup: Active-Active
+
+Both web servers handle traffic simultaneously
+
+More efficient than Active-Passive where backup servers sit idle
+
+2. Web Servers (Nginx x2)
+Role:
+
+Handle HTTP/HTTPS requests
+
+Serve static content
+
+Reverse proxy to application servers
+
+Redundancy: Two servers prevent single point of failure
+
+3. Application Servers (x2)
+Function:
+
+Execute application code
+
+Process business logic
+
+Interface with database
+
+Sync: Both run identical codebase
+
+4. Database Cluster (Primary-Replica)
+Primary Node:
+
+Handles all write operations
+
+Pushes changes to replica
+
+Replica Node:
+
+Handles read operations
+
+Provides failover capability
+
+Sync Method: Asynchronous replication
+
+Infrastructure Issues
+1. Single Points of Failure
+Load Balancer (HAProxy)
+
+Primary Database node
+
+No redundant load balancer
+
+2. Security Concerns
+No firewall implementation
+
+No HTTPS encryption
+
+No intrusion detection system
+
+3. Monitoring Gaps
+No server health monitoring
+
+No traffic analytics
+
+No alert system for failures
+
+4. Performance Limitations
+Only two application servers
+
+Single database write node
+
+No caching layer
+
+Improvement Recommendations
+High Availability:
+
+Add backup load balancer (Active-Passive)
+
+Implement database failover
+
+Security:
+
+Configure firewalls (UFW/iptables)
+
+Implement SSL/TLS encryption
+
+Set up SSH key authentication
+
+Monitoring:
+
+Add Prometheus + Grafana
+
+Configure log aggregation
+
+Set up alert notifications
+
+Performance:
+
+Add caching (Redis/Memcached)
+
+Implement database read replicas
+
+Consider auto-scaling
+
+Communication Flow
+User requests www.foobar.com
+
+DNS resolves to load balancer IP
+
+HAProxy routes request to available web server
+
+Nginx processes request (static) or proxies to app server
+
+App server queries appropriate database node
+
+Response travels back through the chain

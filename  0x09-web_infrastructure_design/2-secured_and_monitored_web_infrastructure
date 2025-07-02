@@ -1,0 +1,112 @@
+# Secured and Monitored Web Infrastructure Design
+
+## Diagram
+```plaintext
+[User] → [Firewall 1] → [HAProxy LB (SSL)] → [Firewall 2]
+                          |
+           +--------------+--------------+
+           |                             |
+[Web Server 1 (Nginx)]        [Web Server 2 (Nginx)]
+   |                             |
+[App Server 1]               [App Server 2]
+   |                             |
+[MySQL Replica]             [MySQL Primary]
+   |                             |
+[Monitoring Agent]          [Monitoring Agent]
+
+----------------------------------------------------------
+Added Components
+1. Three Firewalls
+Edge Firewall: Filters incoming traffic (ports 443/80 only)
+
+Internal Firewall: Controls LB-to-Web traffic
+
+DB Firewall: Restricts database access to app servers only
+
+2. SSL Certificate
+Type: Let's Encrypt wildcard (*.foobar.com)
+
+Location: Installed on HAProxy
+
+Protocol: TLS 1.3 only
+
+3. Monitoring Clients
+Tool: Sumo Logic Collectors
+
+Data Collected:
+
+Nginx access/error logs
+
+MySQL slow queries
+
+System resource metrics
+
+Infrastructure Explanation
+Security Implementation
+HTTPS Enforcement: 301 redirect from HTTP→HTTPS
+
+Firewall Rules:
+
+bash
+# Example rule (UFW):
+sudo ufw allow proto tcp from lb_ip to any port 80
+Monitoring Setup
+QPS Measurement:
+
+bash
+# Live QPS monitoring:
+tail -f /var/log/nginx/access.log | awk '{print $4}' | uniq -c
+Alert Thresholds:
+
+Warning: >500 QPS for 5 minutes
+
+Critical: >1000 QPS for 2 minutes
+
+Current Limitations
+1. SSL Termination Concerns
+Risk: Unencrypted LB→Web traffic
+
+Evidence:
+
+plaintext
+LB (encrypted) → Web (unencrypted) → App → DB
+Solution: Add internal TLS certificates
+
+2. Database Limitations
+Issue	Impact	Solution
+Single writer	Write bottleneck	Add primary-primary replication
+Manual failover	Downtime	Configure MHA (Master High Availability)
+3. Component Overload
+Problem: Web+App+DB on same servers
+
+Performance Impact:
+
+plaintext
+During peak loads:
+Web (60% CPU) + App (70% CPU) + DB (80% CPU) = Resource contention
+Improvement Roadmap
+Immediate (Week 1):
+
+Configure internal TLS
+
+Setup basic monitoring alerts
+
+Short-term (Month 1):
+
+Migrate DB to dedicated servers
+
+Implement WAF rules
+
+Long-term (Quarter 1):
+
+Deploy auto-scaling
+
+Build multi-region failover
+
+text
+
+### Key Features:
+1. **Clear Visual Hierarchy**: ASCII diagram + tables for complex relationships
+2. **Actionable Code**: Includes real command examples
+3. **Structured Tables**: For comparing issues/solutions
+4. **Time-bound Improvements**: Shows progression
