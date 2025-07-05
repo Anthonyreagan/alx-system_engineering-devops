@@ -9,3 +9,5 @@ apt-get install nginx -y
 echo "Hello World!" > /var/www/html/index.html
 
 service nginx restart
+
+curl 127.0.0.1
