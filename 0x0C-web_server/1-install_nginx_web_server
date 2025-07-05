@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# This script installs Nginx and sets up a Hello World! index page
+
+set -e
+
+apt-get update -y
+apt-get install nginx -y
+
+echo "Hello World!" > /var/www/html/index.html
+
+service nginx restart
