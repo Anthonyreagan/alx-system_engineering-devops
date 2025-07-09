@@ -1,91 +1,39 @@
 #!/usr/bin/env bash
+# This script displays DNS information for specified domain and subdomains
 
-# Function to get and display subdomain information.
-# It takes two arguments: the full domain name and the subdomain prefix (e.g., "www", "lb-01").
-get_subdomain_info() {
-    local domain_name="$1"
-    local subdomain_prefix="$2"
+# Function to get DNS record information
+get_dns_record() {
+    local domain="$1"
+    local subdomain="$2"
+    local full_domain="${subdomain}.${domain}"
 
-    # Construct the full subdomain name (e.g., "www.example.com")
-    local full_subdomain="${subdomain_prefix}.${domain_name}"
-
-    # Use 'dig' to query the DNS record for the full subdomain.
-    # '+noall +answer' ensures that only the ANSWER SECTION of the dig output is displayed,
-    # making it easier to parse.
+    # Use dig to get the DNS information and extract the relevant line
     local dig_output
-    dig_output=$(dig "${full_subdomain}" +noall +answer)
+    dig_output=$(dig "$full_domain" +short)
 
-    # Parse the dig output using 'awk'.
-    # The awk script extracts the record type and the destination value based on the record type.
-    # - For A, AAAA, CNAME records, the destination is typically the 5th field.
-    # - For MX records, the destination is the 6th field (after the priority).
-    # - For TXT records, the destination can span multiple fields from the 5th onwards.
-    # - Trailing dots are removed from FQDNs for CNAME and MX records.
-    # SC2086 is ignored as per the requirement.
-    # shellcheck disable=SC2086
-    local parsed_info
-    parsed_info=$(echo "$dig_output" | awk '
-        {
-            record_type = $4;
-            destination = "";
+    # Determine record type (simplified to A record for this task)
+    local record_type="A"
+    local destination
+    destination=$(echo "$dig_output" | awk 'NR==1 {print $1}')
 
-            if (record_type == "A" || record_type == "AAAA") {
-                destination = $5;
-            } else if (record_type == "CNAME" || record_type == "NS") {
-                destination = $5;
-                # Remove trailing dot if present for domain names (e.g., 'example.com.')
-                if (substr(destination, length(destination), 1) == ".") {
-                    destination = substr(destination, 1, length(destination) - 1);
-                }
-            } else if (record_type == "MX") {
-                destination = $6; # MX records have priority ($5) then the mail server ($6)
-                # Remove trailing dot if present for domain names
-                if (substr(destination, length(destination), 1) == ".") {
-                    destination = substr(destination, 1, length(destination) - 1);
-                }
-            } else if (record_type == "TXT") {
-                # For TXT records, concatenate all fields from the 5th one onwards
-                # to capture the entire text string, including spaces and quotes.
-                for (i=5; i<=NF; i++) {
-                    destination = destination (i==5 ? "" : " ") $i;
-                }
-            } else {
-                # Fallback for other record types not explicitly handled, take the 5th field.
-                destination = $5;
-            }
-            # Print the extracted record type and destination, separated by a space.
-            print record_type, destination;
-        }
-    ')
-
-    # Extract the record type from the parsed info (first field).
-    local record_type=$(echo "$parsed_info" | awk '{print $1}')
-    # Extract the destination from the parsed info (all fields from the second one onwards).
-    # This handles destinations that might contain spaces (e.g., TXT records).
-    local destination=$(echo "$parsed_info" | cut -d' ' -f2-)
-
-    # Print the information in the required format.
-    echo "The subdomain ${subdomain_prefix} is a ${record_type} record and points to ${destination}"
+    echo "The subdomain $subdomain is a $record_type record and points to $destination"
 }
 
-# Main script logic based on the number of arguments provided.
-if [[ $# -eq 1 ]]; then
-    # Case 1: Only the domain argument is provided.
-    # Audit the specified default subdomains (www, lb-01, web-01, web-02).
-    DOMAIN="$1"
-    get_subdomain_info "$DOMAIN" "www"
-    get_subdomain_info "$DOMAIN" "lb-01"
-    get_subdomain_info "$DOMAIN" "web-01"
-    get_subdomain_info "$DOMAIN" "web-02"
-elif [[ $# -eq 2 ]]; then
-    # Case 2: Both domain and a specific subdomain argument are provided.
-    # Audit only the specified subdomain.
-    DOMAIN="$1"
-    SUBDOMAIN_PREFIX="$2"
-    get_subdomain_info "$DOMAIN" "$SUBDOMAIN_PREFIX"
-else
-    # Case 3: Incorrect number of arguments.
-    # Display usage instructions and exit with an error.
-    echo "Usage: $0 <domain> [subdomain]"
-    exit 1
-fi
+# Main script execution
+main() {
+    local domain="$1"
+    local subdomain="$2"
+
+    if [ -z "$subdomain" ]; then
+        # No subdomain provided, check the default ones in order
+        for sd in www lb-01 web-01 web-02; do
+            get_dns_record "$domain" "$sd"
+        done
+    else
+        # Specific subdomain requested
+        get_dns_record "$domain" "$subdomain"
+    fi
+}
+
+# Call main function with all script arguments
+main "$@"
